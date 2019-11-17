@@ -136,10 +136,21 @@ void backward(unsigned char *RST, unsigned char *FIN, int length) {
 	//send rst packet
 	unsigned char rst[54];
 	memcpy(rst, RST, 54);
+	swap_ranges(rst, rst+6, rst+6);
+	swap_ranges(rst+26, rst+30, rst+30);
+	swap_ranges(rst+34, rst+36, rst+36);
+	swap_ranges(rst+38, rst+42, rst+42);
+	pcap_sendpacket(handle, rst, length);	
 
 	//send fin packet
 	unsigned char fin[54];
 	memcpy(fin, FIN, 54);
+	swap_ranges(fin, fin+6, fin+6);
+	swap_ranges(fin+26, fin+30, fin+30);
+	swap_ranges(fin+34, fin+36, fin+36);
+	swap_ranges(fin+38, fin+42, fin+42);
+	pcap_sendpacket(handle, fin, length);
+
 	return;
 }
 
