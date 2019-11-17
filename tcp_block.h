@@ -23,5 +23,5 @@ uint16_t IP_checksum(unsigned char* pk);
 uint16_t tcp_checksum(unsigned char* pseudo_header, unsigned char* pk);
 int host_check(const unsigned char *data);
 void forward(const unsigned char *pk, int length);
-void backward(const unsigned char *pk, int length);
+void backward(unsigned char *rst, unsigned char *fin, int length);
 

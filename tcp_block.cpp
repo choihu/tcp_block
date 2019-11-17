@@ -118,6 +118,7 @@ void forward(const unsigned char *pk, int length) {
 	//send fin packet
 	unsigned char fin[54];
 	memcpy(fin, rst, 54);
+	fin[15] = 0x00; //Differentiated Services Field
 	memset(fin+24, 0x00, 2);
 	checksum = htons(IP_checksum(fin+14));
 	memcpy(fin+24, &checksum, 2); //Calculate ip checksum
@@ -128,7 +129,7 @@ void forward(const unsigned char *pk, int length) {
 
 	pcap_sendpacket(handle, fin, 54);
 
-	backward(rst, fin, length)
+	backward(rst, fin, length);
 	return;
 }
 
