@@ -60,23 +60,12 @@ int host_check(const unsigned char *data) {
                 }
         }
         int i = 0;
-
         //check captured host in block_host vector
         if(k != 6) {
                 while(1) {
                         if(!memcmp(data + http_offset + i, "Host: ", 6)) {
                                 i += 6;
-                                char *captured_host;
-                                int length = 0;
-                                while(1) {
-                                        if(!memcmp(data + http_offset + i, "\r\n", 2)) {
-                                                break;
-                                        }
-                                        i++;
-					length++;
-				}
-				memcpy(captured_host, data + http_offset + i, length);
-				if(!memcmp(captured_host, block_host, length)) {
+				if(!memcmp(data + http_offset + i, block_host, strlen(block_host))) {
 					return 1;
 				}
                                 break;
@@ -100,7 +89,7 @@ void forward(const unsigned char *pk, int length) {
 	memcpy(rst+24, &checksum, 2); //Calculate ip checksum
 	uint32_t seq_num;
 	memcpy(&seq_num, pk+38, 4);
-	seq_num = htons(seq_num + length - 53);
+	seq_num = htons(seq_num + length - 54);
 	memcpy(rst+38, &seq_num, 4); //Set tcp sequence num
 	rst[47] = 0x14; //Set rst flg
 	memset(rst+48, 0x00, 6);
@@ -111,7 +100,7 @@ void forward(const unsigned char *pk, int length) {
 	pseudo_header[9] = 0x06;
 	memcpy(pseudo_header+10, "0x0020", 2);
 	checksum = htons(tcp_checksum(pseudo_header, rst+34));
-	memcpy(rst+34, &checksum, 4); //Calculate tcp checksum
+	memcpy(rst+50, &checksum, 2); //Calculate tcp checksum
 
 	pcap_sendpacket(handle, rst, 54);
 
@@ -123,17 +112,18 @@ void forward(const unsigned char *pk, int length) {
 	checksum = htons(IP_checksum(fin+14));
 	memcpy(fin+24, &checksum, 2); //Calculate ip checksum
 	fin[47] = 0x11; //Set fin flg
+	fin[47] = 0x11;
 	memset(fin+48, 0x00, 6);
 	checksum = htons(tcp_checksum(pseudo_header, fin+34));
-	memcpy(fin+34, &checksum, 4); //Calculate tcp checksum
+	memcpy(fin+50, &checksum, 2); //Calculate tcp checksum
 
 	pcap_sendpacket(handle, fin, 54);
 
-	backward(rst, fin, length);
+	backward(rst, fin);
 	return;
 }
 
-void backward(unsigned char *RST, unsigned char *FIN, int length) {
+void backward(unsigned char *RST, unsigned char *FIN) {
 	//send rst packet
 	unsigned char rst[54];
 	memcpy(rst, RST, 54);
@@ -141,7 +131,7 @@ void backward(unsigned char *RST, unsigned char *FIN, int length) {
 	swap_ranges(rst+26, rst+30, rst+30);
 	swap_ranges(rst+34, rst+36, rst+36);
 	swap_ranges(rst+38, rst+42, rst+42);
-	pcap_sendpacket(handle, rst, length);	
+	pcap_sendpacket(handle, rst, 54);	
 
 	//send fin packet
 	unsigned char fin[54];
@@ -150,7 +140,7 @@ void backward(unsigned char *RST, unsigned char *FIN, int length) {
 	swap_ranges(fin+26, fin+30, fin+30);
 	swap_ranges(fin+34, fin+36, fin+36);
 	swap_ranges(fin+38, fin+42, fin+42);
-	pcap_sendpacket(handle, fin, length);
+	pcap_sendpacket(handle, fin, 54);
 
 	return;
 }

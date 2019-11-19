@@ -33,12 +33,13 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "packet capture error");
 			break;
 		}
-
-		if( host_check(packet) == 1) {
-			int length = header->caplen;
-			forward(packet, length);
-			//backward(packet, length);
-			printf("***%s is blocked\n", block_host);
+		printf("packet captured\n\n");
+		int length = header->caplen;
+		if( length >= 54 ) {
+			if( host_check(packet + 14) == 1) {
+				forward(packet, length);
+				printf("***%s is blocked***\n", block_host);
+			}
 		}
 	}
 }
