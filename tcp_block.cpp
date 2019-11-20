@@ -79,7 +79,14 @@ int host_check(const unsigned char *data) {
 void forward(const unsigned char *pk, int length) {
 	//send rst packet
 	unsigned char rst[54];
-	memcpy(rst, pk, 54);
+	uint8_t ip_header_length, tcp_header_length, eth_header_length = 14;
+        ip_header_length = (pk[eth_header_length] & 0x0F) * 4;
+        tcp_header_length = ((pk[ip_header_length + eth_header_length + 12] & 0xF0) >> 4) * 4;
+	
+	memcpy(rst, pk, eth_header_length);
+	memcpy(rst + 14, pk + eth_header_length, ip_header_length);
+	memcpy(rst + 34, pk + eth_header_length + ip_header_length, tcp_header_length);
+
 	rst[15] = 0x44; //Differentiated Services Field
 	rst[16] = 0x00; 
 	rst[17] = 0x28; //Total Length
